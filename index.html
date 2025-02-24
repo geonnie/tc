@@ -28,50 +28,11 @@
       margin: 5px;
       padding: 5px 10px;
     }
-    #summarySection {
-      border: 2px solid #000;
-      padding: 10px;
-      margin-bottom: 20px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
   </style>
   <script>
-    // 전역 카운터 및 금액 배열 변수
+    // 전역 카운터 변수
     let djCounter = 0;
     let tcCounter = 0;
-    let djAmounts = [];
-    let tcAmounts = [];
-
-    // 요약 업데이트 함수
-    function updateSummary() {
-      let djSummary = document.getElementById("djSummary");
-      let tcSummary = document.getElementById("tcSummary");
-      let totalSummary = document.getElementById("totalSummary");
-
-      let djText = "";
-      let djTotal = 0;
-      for (let i = 0; i < djAmounts.length; i++) {
-        if (djAmounts[i] === undefined) continue;
-        djText += "DJ" + (i + 1) + ": " + djAmounts[i].toLocaleString() + "원, ";
-        djTotal += djAmounts[i];
-      }
-      if(djText) djText = djText.slice(0, -2);
-
-      let tcText = "";
-      let tcTotal = 0;
-      for (let i = 0; i < tcAmounts.length; i++) {
-        if (tcAmounts[i] === undefined) continue;
-        tcText += "TC" + (i + 1) + ": " + tcAmounts[i].toLocaleString() + "원, ";
-        tcTotal += tcAmounts[i];
-      }
-      if(tcText) tcText = tcText.slice(0, -2);
-
-      djSummary.innerText = "DJ 금액: " + (djText || "없음") + " / 합계: " + djTotal.toLocaleString() + "원";
-      tcSummary.innerText = "TC 금액: " + (tcText || "없음") + " / 합계: " + tcTotal.toLocaleString() + "원";
-      totalSummary.innerText = "총 계: " + (djTotal + tcTotal).toLocaleString() + "원";
-    }
 
     // DJ 항목 추가 함수
     function addDJEntry() {
@@ -106,15 +67,13 @@
       container.appendChild(div);
     }
 
-    // DJ 계산 함수 (한타임: 100분, 0.5타임: 30분 기준, 금액: 1타임 10만원, 0.5타임 5만원)
+    // DJ 계산 함수 (한타임: 100분, 0.5타임: 30분 기준, 1타임=10만원, 0.5타임=5만원)
     function calculateDJEntries() {
-      djAmounts = []; // 배열 초기화
       for (let i = 1; i <= djCounter; i++) {
         let entryTime = document.getElementById("djEntryTime" + i).value;
         let exitTime = document.getElementById("djExitTime" + i).value;
         if (!entryTime || !exitTime) {
           document.getElementById("djResult" + i).innerText = "시작과 끝 시간을 입력해주세요.";
-          djAmounts[i - 1] = 0;
           continue;
         }
         let entry = new Date("2023-01-01T" + entryTime);
@@ -135,24 +94,19 @@
         } else if (fractional === 1) {
           djPrice += 100000;
         }
-        djAmounts[i - 1] = djPrice;
         document.getElementById("djResult" + i).innerText = 
           `사용한 시간: ${diffMinutes}분, 총 ${totalTime} 타임, 금액: ${djPrice.toLocaleString()}원`;
       }
-      updateSummary();
     }
 
     // TC 계산 함수 (한타임: 80분, 0.5타임: 30분, 0.3타임: 10분 기준)
-    // 지명 여부에 따라 1타임 금액이 14만원(지명) 또는 12만원(일반)
     function calculateTCEntries() {
-      tcAmounts = []; // 배열 초기화
       for (let i = 1; i <= tcCounter; i++) {
         let entryTime = document.getElementById("tcEntryTime" + i).value;
         let exitTime = document.getElementById("tcExitTime" + i).value;
         let designated = document.getElementById("tcDesignated" + i).checked;
         if (!entryTime || !exitTime) {
           document.getElementById("tcResult" + i).innerText = "시작과 끝 시간을 입력해주세요.";
-          tcAmounts[i - 1] = 0;
           continue;
         }
         let entry = new Date("2023-01-01T" + entryTime);
@@ -184,24 +138,14 @@
         } else if (fractional === 1) {
           price = (fullTC + 1) * fullRate;
         }
-        tcAmounts[i - 1] = price;
         document.getElementById("tcResult" + i).innerText = 
           `사용한 시간: ${diffMinutes}분, 총 ${totalTC} 타임, 금액: ${price.toLocaleString()}원`;
       }
-      updateSummary();
     }
   </script>
 </head>
 <body>
   <h1>TC 계산기</h1>
-  
-  <!-- 요약 영역 -->
-  <div id="summarySection">
-    <h2>금액 요약</h2>
-    <p id="djSummary">DJ 금액: 없음</p>
-    <p id="tcSummary">TC 금액: 없음</p>
-    <h3 id="totalSummary">총 계: 0원</h3>
-  </div>
   
   <!-- DJ 계산기 섹션 -->
   <div class="section" id="djSection">
