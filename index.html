@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DJ TC 계산기 및 TC 계산기</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      font-size: 18px;
+    }
+    .entry {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px auto;
+      max-width: 500px;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    label {
+      margin: 0 5px;
+    }
+    button {
+      font-size: 16px;
+      margin: 5px;
+      padding: 5px 10px;
+    }
+  </style>
+  <script>
+    // 전역 카운터 변수
+    let djCounter = 0;
+    let tcCounter = 0;
+
+    // DJ 항목 추가 함수
+    function addDJEntry() {
+      djCounter++;
+      let container = document.getElementById("djContainer");
+      let div = document.createElement("div");
+      div.className = "entry";
+      div.id = "djEntry" + djCounter;
+      div.innerHTML = `
+        <h3>DJ ${djCounter}</h3>
+        <label>입장 시간: <input type="time" id="djEntryTime${djCounter}"></label>
+        <label>퇴장 시간: <input type="time" id="djExitTime${djCounter}"></label>
+        <p id="djResult${djCounter}"></p>
+      `;
+      container.appendChild(div);
+    }
+
+    // TC 항목 추가 함수
+    function addTCEntry() {
+      tcCounter++;
+      let container = document.getElementById("tcContainer");
+      let div = document.createElement("div");
+      div.className = "entry";
+      div.id = "tcEntry" + tcCounter;
+      div.innerHTML = `
+        <h3>TC ${tcCounter}</h3>
+        <label>입장 시간: <input type="time" id="tcEntryTime${tcCounter}"></label>
+        <label>퇴장 시간: <input type="time" id="tcExitTime${tcCounter}"></label>
+        <label>지명: <input type="checkbox" id="tcDesignated${tcCounter}"></label>
+        <p id="tcResult${tcCounter}"></p>
+      `;
+      container.appendChild(div);
+    }
+
+    // DJ 계산 함수 (한타임: 100분, 0.5타임: 30분 기준)
+    function calculateDJEntries() {
+      for (let i = 1; i <= djCounter; i++) {
+        let entryTime = document.getElementById("djEntryTime" + i).value;
+        let exitTime = document.getElementById("djExitTime" + i).value;
+        if (!entryTime || !exitTime) {
+          document.getElementById("djResult" + i).innerText = "입장시간과 퇴장시간을 입력해주세요.";
+          continue;
+        }
+        let entry = new Date("2023-01-01T" + entryTime);
+        let exit = new Date("2023-01-01T" + exitTime);
+        // 자정을 넘어가는 경우 익일로 처리
+        if (exit < entry) {
+          exit.setDate(exit.getDate() + 1);
+        }
+        let diffMinutes = (exit - entry) / (1000 * 60);
+        let fullTimes = Math.floor(diffMinutes / 100);
+        let remaining = diffMinutes % 100;
+        let fractional = (remaining === 0) ? 0 : (remaining > 30 ? 1 : 0.5);
+        let totalTime = fullTimes + fractional;
+        document.getElementById("djResult" + i).innerText = `사용한 시간: ${diffMinutes}분, 총 ${totalTime} 타임`;
+      }
+    }
+
+    // TC 계산 함수 (한타임: 80분, 0.5타임: 30분, 0.3타임: 10분 기준)
+    function calculateTCEntries() {
+      for (let i = 1; i <= tcCounter; i++) {
+        let entryTime = document.getElementById("tcEntryTime" + i).value;
+        let exitTime = document.getElementById("tcExitTime" + i).value;
+        let designated = document.getElementById("tcDesignated" + i).checked;
+        if (!entryTime || !exitTime) {
+          document.getElementById("tcResult" + i).innerText = "입장시간과 퇴장시간을 입력해주세요.";
+          continue;
+        }
+        let entry = new Date("2023-01-01T" + entryTime);
+        let exit = new Date("2023-01-01T" + exitTime);
+        if (exit < entry) {
+          exit.setDate(exit.getDate() + 1);
+        }
+        let diffMinutes = (exit - entry) / (1000 * 60);
+        let fullTC = Math.floor(diffMinutes / 80);
+        let remainder = diffMinutes % 80;
+        let fractional = 0;
+        if (remainder > 0 && remainder <= 10) {
+          fractional = 0.3;
+        } else if (remainder > 10 && remainder <= 30) {
+          fractional = 0.5;
+        } else if (remainder > 30) {
+          fractional = 1;
+        }
+        let totalTC = fullTC + fractional;
+        // 가격 계산: 지명 여부에 따라 fullRate 변경
+        let fullRate = designated ? 140000 : 120000;
+        let price = 0;
+        if (fractional === 0) {
+          price = fullTC * fullRate;
+        } else if (fractional === 0.3) {
+          price = fullTC * fullRate + 30000;
+        } else if (fractional === 0.5) {
+          price = fullTC * fullRate + 60000;
+        } else if (fractional === 1) {
+          price = (fullTC + 1) * fullRate;
+        }
+        document.getElementById("tcResult" + i).innerText = `사용한 시간: ${diffMinutes}분, 총 ${totalTC} 타임, 금액: ${price.toLocaleString()}원`;
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>DJ TC 계산기 및 TC 계산기</h1>
+  
+  <!-- DJ TC 계산기 섹션 -->
+  <div class="section" id="djSection">
+    <h2>DJ TC 계산기</h2>
+    <div id="djContainer"></div>
+    <button onclick="addDJEntry()">DJ 추가</button>
+    <button onclick="calculateDJEntries()">계산하기</button>
+  </div>
+  
+  <!-- TC 계산기 섹션 -->
+  <div class="section" id="tcSection">
+    <h2>TC 계산기</h2>
+    <div id="tcContainer"></div>
+    <button onclick="addTCEntry()">TC 추가</button>
+    <button onclick="calculateTCEntries()">계산하기</button>
+  </div>
+  
+  <!-- 페이지가 로드되면 기본 항목 1개씩 추가 -->
+  <script>
+    addDJEntry();
+    addTCEntry();
+  </script>
+</body>
+</html>
